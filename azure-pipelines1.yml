@@ -1,0 +1,35 @@
+trigger: 
+- terraform-branch
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    
+    - task: TerraformTaskV4@4
+      displayName: init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+    - task: ArchiveFiles@2
+      displayName: Archieve files
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)/'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+    
+    - task: TerraformTaskV4@4
+      displayName: Validation
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: '$(Build.BuildId)-build'
+        publishLocation: 'Container'
